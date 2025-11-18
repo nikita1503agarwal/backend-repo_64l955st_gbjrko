@@ -12,10 +12,12 @@ Model name is converted to lowercase for the collection name:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
-
+# ---------------------------------------------------------------------
+# Example schemas (kept for reference)
+# ---------------------------------------------------------------------
 class User(BaseModel):
     """
     Users collection schema
@@ -38,11 +40,55 @@ class Product(BaseModel):
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+# ---------------------------------------------------------------------
+# Internet Complaint Register App Schemas
+# ---------------------------------------------------------------------
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Complaint(BaseModel):
+    """
+    Internet service complaint submitted by customers, admins, or team members.
+    Collection name: "complaint"
+    """
+    customer_name: str
+    customer_contact: str = Field(..., description="Email or phone")
+    address: Optional[str] = None
+    subject: str
+    description: str
+    priority: str = Field("normal", description="low, normal, high, urgent")
+    status: str = Field("pending", description="pending, process, complete")
+    assigned_team: Optional[str] = Field(None, description="Team name handling the complaint")
+    notes: List[dict] = Field(default_factory=list, description="Timeline notes/updates")
+
+class Notification(BaseModel):
+    """
+    Lightweight notification for users about complaint updates.
+    Collection name: "notification"
+    """
+    user_id: str = Field(..., description="Identifier like email/username/team name")
+    title: str
+    message: str
+    type: str = Field("info", description="info, success, warning, error")
+    is_read: bool = False
+    related_complaint_id: Optional[str] = None
+
+class Team(BaseModel):
+    """
+    Optional team collection for future extensions.
+    Collection name: "team"
+    """
+    name: str
+    description: Optional[str] = None
+    is_active: bool = True
+
+class Admin(BaseModel):
+    """
+    Optional admin collection for future extensions.
+    Collection name: "admin"
+    """
+    name: str
+    email: Optional[str] = None
+    is_active: bool = True
+
+# Timestamps like created_at/updated_at are auto-added by database helpers
+# when using create_document(). For updates, backend endpoints will set
+# updated_at accordingly.
